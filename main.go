@@ -3,9 +3,10 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"log"
-	"os"
 	"io"
+	"log"
+	"net"
+	// "os"
 )
 
 func getLinesChannel(f io.ReadCloser) <-chan string {
@@ -46,14 +47,22 @@ return  out
 }
 
 func main(){
-	f,err := os.Open("messages.txt")
+	listner, err := net.Listen("tcp",":42069")
+	// f,err := os.Open("messages.txt")
 	if err != nil {
 		log.Fatal("error","error",err)
 	}
-	
-	lines := getLinesChannel(f)
+
+	for {
+		conn,err := listner.Accept()
+		if err != nil {
+			log.Fatal("error","error",err)
+		}
+			lines := getLinesChannel(conn) // reading 8 bytes form a connection instead of priviously files
 	for line := range lines {
 		fmt.Printf("read: %s\n",line)
 	}
+	}
+	
 	
 }
