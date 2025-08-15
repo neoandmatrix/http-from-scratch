@@ -1,50 +1,51 @@
 package main
 
 import (
-	"bytes"
+	// "bytes"
 	"fmt"
-	"io"
+	"httpformscratch/internal/request"
+	// "io"
 	"log"
 	"net"
 	// "os"
 )
 
-func getLinesChannel(f io.ReadCloser) <-chan string {
-	out := make(chan string,1)
+// func getLinesChannel(f io.ReadCloser) <-chan string {
+// 	out := make(chan string,1)
 
-	go func ()  {
-		defer f.Close()
-		defer close(out)
+// 	go func ()  {
+// 		defer f.Close()
+// 		defer close(out)
 
-		str := ""
-	for{
-		data := make([]byte,8)
-		n,err := f.Read(data)
-		if err != nil {
-			break
-		}
-		data = data[:n]
-		if i := bytes.IndexByte(data,'\n'); i!=-1 {
-			str += string(data[:i])
-			data = data[i+1:]
-			out <- str
-			//		fmt.Printf("read: %s\n",str)
-		str = ""
-		}
-		str += string(data)
-	}
+// 		str := ""
+// 	for{
+// 		data := make([]byte,8)
+// 		n,err := f.Read(data)
+// 		if err != nil {
+// 			break
+// 		}
+// 		data = data[:n]
+// 		if i := bytes.IndexByte(data,'\n'); i!=-1 {
+// 			str += string(data[:i])
+// 			data = data[i+1:]
+// 			out <- str
+// 			//		fmt.Printf("read: %s\n",str)
+// 		str = ""
+// 		}
+// 		str += string(data)
+// 	}
 
-	if len(str) !=0{
-		// fmt.Printf("read: %s\n",str)
-		out <- str
-	}
+// 	if len(str) !=0{
+// 		// fmt.Printf("read: %s\n",str)
+// 		out <- str
+// 	}
 
 	
-}()
+// }()
 
-return  out
+// return  out
 
-}
+// }
 
 func main(){
 	listner, err := net.Listen("tcp",":42069")
@@ -58,10 +59,24 @@ func main(){
 		if err != nil {
 			log.Fatal("error","error",err)
 		}
-			lines := getLinesChannel(conn) // reading 8 bytes form a connection instead of priviously files
-	for line := range lines {
-		fmt.Printf("read: %s\n",line)
-	}
+
+		r,err := request.RequestFromReader(conn)
+		if err != nil {
+			log.Fatal("error",err)
+		}
+
+		fmt.Printf("Request Line:\n")
+		fmt.Printf("- Method: %s\n",r.RequestLine.Method)
+				fmt.Printf("- Target: %s\n",r.RequestLine.RequestTarget)
+						fmt.Printf("- Version: %s\n",r.RequestLine.HttpVersion)
+		fmt.Printf("Headers:\n")
+		r.Headers.ForEach(func (n,v string)  {
+		 	fmt.Printf("- %s: %s\n",n,v)
+		})				
+	// 		lines := getLinesChannel(conn) // reading 8 bytes form a connection instead of priviously files
+	// for line := range lines {
+	// 	fmt.Printf("read: %s\n",line)
+	// }
 	}
 	
 	

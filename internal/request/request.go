@@ -2,6 +2,7 @@ package request
 
 import (
 	"bytes"
+	"httpformscratch/internal/headers"
 	// "errors"
 	"fmt"
 	"io"
@@ -20,12 +21,14 @@ type RequestLine struct {
 
 type Request struct {
 	RequestLine RequestLine
+	Headers *headers.Headers
 	state parserState
 }
 
 func newRequest() *Request {
 	return &Request{
 		state: StateInit,
+		Headers: headers.NewHeaders(),
 	}
 }
 
@@ -39,6 +42,7 @@ const (
 	StateInit parserState = "init"
 	StateDone parserState = "done"
 	stateError parserState = "error"
+	stateHeaders parserState = "headers"
 )
 
 func parseRequestLine(b []byte) (*RequestLine,int,error){
@@ -78,11 +82,12 @@ func (r *Request) parse(data []byte) (int, error){
 	read := 0
 outer: 
 	for {
+		currentData := data[read:]
 		switch r.state {
 		case stateError:
 			return 0, ErrRequestInErrorState
 		case StateInit:
-			rl,n,err := parseRequestLine(data[read:])
+			rl,n,err := parseRequestLine(currentData)
 			if err != nil {
 				return 0,err
 			}
@@ -91,8 +96,24 @@ outer:
 			}
 			r.RequestLine = *rl
 			read += n
+			r.state = stateHeaders
 
 			r.state = StateDone
+		case stateHeaders:
+			n,done,err := r.Headers.Parse(currentData)
+
+			if err != nil {
+				return 0,err
+			}
+
+			if n == 0 {
+				// return 0,nil
+				break outer
+			}
+			read += n
+			if done {
+				r.state = StateDone
+			}
 		case StateDone:
 			break outer
 		}
