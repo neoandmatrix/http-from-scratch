@@ -100,7 +100,7 @@ func parseRequestLine(b []byte) (*RequestLine,int,error){
 
 func (r *Request) hasBody() bool {
 	length := getInt(r.Headers,"content-length",0)
-	return  length == 0
+	return  length > 0 // should return true if body is other than 0 length
 }
 
 func (r *Request) parse(data []byte) (int, error){
@@ -126,7 +126,7 @@ outer:
 			read += n
 			r.state = stateHeaders
 
-			r.state = StateDone
+			// r.state = StateDone -> why was i setting it done immediately ??????????????
 		case stateHeaders:
 			n,done,err := r.Headers.Parse(currentData)
 
@@ -183,22 +183,24 @@ func RequestFromReader(reader io.Reader) (*Request, error){
 	// var request *Request
 	bufLen := 0
 	// simulating slowly reading one at a time
-	for  !request.done() {
-		n, err := reader.Read(buf[bufLen:])
-		if err != nil{
-			return nil,err
-		}
-		bufLen += n
-		readN,err := request.parse(buf[:bufLen])
-		if err != nil {
-			return nil,err
-		}
-		// data,err := io.ReadAll(reader)
-		
-		copy(buf, buf[readN:bufLen])
-		bufLen -= readN
-	
-	}
+	for !request.done() {
+        n, err := reader.Read(buf[bufLen:])
+        if n > 0 {
+            bufLen += n
+            readN, err := request.parse(buf[:bufLen])
+            if err != nil {
+                return nil, err
+            }
+            copy(buf, buf[readN:bufLen])
+            bufLen -= readN
+        }
+        if err != nil {
+            if err == io.EOF {
+                break // eof exit handled
+            }
+            return nil, err
+        }
+    }
 
 	// if err != nil {
 	// 	return nil,errors.Join(
