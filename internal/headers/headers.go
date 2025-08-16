@@ -10,7 +10,7 @@ type Headers struct {
 	headers map[string]string
 }
 
-func isToken(str string) bool{
+func isToken(str string) bool {
 	for _,ch := range str {
 		found := false
 		if (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') {
