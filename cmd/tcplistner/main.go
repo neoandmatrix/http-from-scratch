@@ -1,13 +1,10 @@
 package main
 
 import (
-	// "bytes"
 	"fmt"
 	"httpformscratch/internal/request"
-	// "io"
 	"log"
 	"net"
-	// "os"
 )
 
 // func getLinesChannel(f io.ReadCloser) <-chan string {
@@ -47,6 +44,8 @@ import (
 
 // }
 
+// TODO: headers and body not workig currntly have to fix them
+
 func main(){
 	listner, err := net.Listen("tcp",":42069")
 	// f,err := os.Open("messages.txt")
@@ -67,12 +66,14 @@ func main(){
 
 		fmt.Printf("Request Line:\n")
 		fmt.Printf("- Method: %s\n",r.RequestLine.Method)
-				fmt.Printf("- Target: %s\n",r.RequestLine.RequestTarget)
-						fmt.Printf("- Version: %s\n",r.RequestLine.HttpVersion)
+		fmt.Printf("- Target: %s\n",r.RequestLine.RequestTarget)
+		fmt.Printf("- Version: %s\n",r.RequestLine.HttpVersion)
 		fmt.Printf("Headers:\n")
 		r.Headers.ForEach(func (n,v string)  {
 		 	fmt.Printf("- %s: %s\n",n,v)
-		})				
+		})		
+		fmt.Printf("Body:\n")
+		fmt.Printf("%s\n",r.Body)		
 	// 		lines := getLinesChannel(conn) // reading 8 bytes form a connection instead of priviously files
 	// for line := range lines {
 	// 	fmt.Printf("read: %s\n",line)
