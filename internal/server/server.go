@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"httpformscratch/internal/response"
 	"io"
 	"net"
 )
@@ -10,10 +11,14 @@ type Server struct {
 	closed bool
 }
 
-func runConnection(s *Server,conn io.ReadWriteCloser)  {
-	out := []byte("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello World!`")
-	conn.Write(out)
-	conn.Close()
+func runConnection(_s *Server,conn io.ReadWriteCloser)  {
+	defer conn.Close()
+	// out := []byte("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello World!`")
+	// conn.Write(out)
+	headers := response.GetDefaultHeaders(0)
+	response.WriteStatusLine(conn,response.StatusOK)
+	response.WriteHeaders(conn,headers)
+	
 }
 
 func runServer(s *Server, listner net.Listener) {
