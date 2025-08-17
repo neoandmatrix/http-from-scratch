@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
 	"httpformscratch/internal/request"
 	"httpformscratch/internal/response"
@@ -15,7 +14,7 @@ type HandlerError struct {
 	Message string
 }
 
-type Handler func(w io.Writer,req *request.Request ) *HandlerError
+type Handler func(w *response.Writer,req *request.Request )
 
 
 type Server struct {
@@ -27,34 +26,37 @@ func runConnection(s *Server,conn io.ReadWriteCloser)  {
 	defer conn.Close()
 	// out := []byte("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello World!`")
 	// conn.Write(out)
-	headers := response.GetDefaultHeaders(0)
-	writer := bytes.NewBuffer([]byte{})
+	responseWriter := response.NewWriter(conn)
+	// headers := response.GetDefaultHeaders(0)
+	// writer := bytes.NewBuffer([]byte{})
 	r,err := request.RequestFromReader(conn)
 	if err != nil {
-		response.WriteStatusLine(conn,response.StatusBadRequest)
-		response.WriteHeaders(conn,headers)
+		responseWriter.WriteStatusLine(response.StatusBadRequest)
+		responseWriter.WriteHeaders(*response.GetDefaultHeaders(0))
 		return
 	}
-	handlerError := s.handler(writer,r)
+	// writer = bytes.NewBuffer([]byte{})
+	s.handler(responseWriter,r)
 
-	var body []byte = nil
-	var status response.StatusCode = response.StatusOK
-	if handlerError != nil {
-		body = []byte(handlerError.Message)
-		response.WriteStatusLine(conn, handlerError.StatusCode)
-		headers.Replace("Content-Length", fmt.Sprintf("%d", len(body)))
-		response.WriteHeaders(conn, headers)
-		conn.Write(body)
-		return
-} else {
-		body = writer.Bytes()
-	}
+// 	var body []byte = nil
+// 	var status response.StatusCode = response.StatusOK
+// 	if handlerError != nil {
+// 		body = []byte(handlerError.Message)
+// 		response.WriteStatusLine(conn, handlerError.StatusCode)
+// 		headers.Replace("Content-Length", fmt.Sprintf("%d", len(body)))
+// 		response.WriteHeaders(conn, headers)
+// 		conn.Write(body)
+// 		return
+// } else {
+// 		body = writer.Bytes()
+// 	}
 
-	headers.Replace("Content-Length",fmt.Sprintf("%d",body))
-	response.WriteStatusLine(conn,status)
-	response.WriteHeaders(conn,headers)
-	conn.Write(body)
+// 	headers.Replace("Content-Length",fmt.Sprintf("%d",body))
+// 	response.WriteStatusLine(conn,status)
+// 	response.WriteHeaders(conn,headers)
+// 	conn.Write(body)
 	
+
 }
 
 func runServer(s *Server, listner net.Listener) {
